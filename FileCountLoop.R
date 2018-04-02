@@ -50,4 +50,20 @@ DF2 <- data.frame(DF[,-1],row.names=DF[,1])
 DFt <- t(DF2)
 DFt <- as.data.frame(DFt)
 
+#Merge together all asp extensions
+DFt$xxx111 <- rowSums(DFt[,grepl('as',names(DFt))],na.rm=TRUE)
+DFt <- DFt[,!grepl('as',names(DFt))]
+names(DFt)[names(DFt) == 'xxx111'] <- 'asp'
+#Same for port ext
+DFt$xxx111 <- rowSums(DFt[,grepl('port',names(DFt))],na.rm=TRUE)
+DFt <- DFt[,!grepl('port',names(DFt))]
+names(DFt)[names(DFt) == 'xxx111'] <- 'port'
+#HTML
+DFt$xxx111 <- rowSums(DFt[,grepl('htm',names(DFt))],na.rm=TRUE)
+DFt <- DFt[,!grepl('htm',names(DFt))]
+names(DFt)[names(DFt) == 'xxx111'] <- 'html'
+#JPEG
+DFt$xxx111 <- rowSums(DFt[,grepl('jp',names(DFt))],na.rm=TRUE)
+DFt <- DFt[,!grepl('jp',names(DFt))]
+names(DFt)[names(DFt) == 'xxx111'] <- 'jpeg'
 

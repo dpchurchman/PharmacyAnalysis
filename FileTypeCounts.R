@@ -21,15 +21,14 @@ source('FileCountLoop.R')
 
 #Use DFt output from FileCountLoop.R to make Legit Website Dataframe
 
-#Merge together all asp extensions
-DFt$xxx111 <- rowSums(DFt[,grepl('as',names(DFt))],na.rm=TRUE)
-DFt <- DFt[,!grepl('as',names(DFt))]
-names(DFt)[names(DFt) == 'xxx111'] <- 'asp'
 
+#Drop the blank values, which are parent directories
 LegitExtCount <- as.data.frame(DFt[,-1])
+#Label these Legit
 LegitExtCount$Type <- "Legit"
 LegitExtCount$Website <- row.names(LegitExtCount)
 row.names(LegitExtCount) <- NULL
+
 
 #Repeat process for fake websites
 Files <- c('ConcoctedPharma/FakeHealth/FakeHealth',
@@ -40,7 +39,13 @@ source('FileCountLoop.R')
 
 
 #Use DFt output from FileCountLoop.R to make Legit Website Dataframe
-FakeExtCount <- as.data.frame(DFt[,-6])
+#Drop blank column
+#Primary is actually html
+DFt$xxx111 <- rowSums(DFt[,names(DFt) == 'html' | names(DFt) == 'primary'],na.rm=TRUE)
+DFt <- DFt[,names(DFt) != 'html' & names(DFt) != 'primary']
+names(DFt)[names(DFt) == 'xxx111'] <- 'html'
+
+FakeExtCount <- as.data.frame(DFt[,-which(names(DFt) %in% "V6")])
 FakeExtCount$Type <- "Fake"
 FakeExtCount$Website <- row.names(FakeExtCount)
 row.names(FakeExtCount) <- NULL
@@ -66,7 +71,7 @@ AggExt <- aggregate(Count ~ Type + Extension,
                     data=ExtensionCountsLong, FUN=function(x){round(mean(x))})
 
 #Remove extensions with average of 0
-AggExt <- AggExt[which(AggExt$Count != 0),]
+AggExt <- AggExt[which(AggExt$Count > 2),]
 names(AggExt) <- c('Type','Extension','AvgCount')
 
 CommonExtensions <- unique(AggExt$Extension)
@@ -79,13 +84,18 @@ ExtensionCounts <- ExtensionCounts[,colnames(ExtensionCounts) %in% CommonExtensi
 
 write.csv(ExtensionCounts,"ExtensionCounts.csv",row.names = FALSE)
 
+head(AggExt)
 #Bar Plot for EDA
 library(ggplot2)
 ggplot(AggExt, aes(x=Extension,
                    y=AvgCount,
                    fill=Type))+
-  geom_bar(position='dodge',stat='identity')
-  
+  geom_bar(position='dodge',stat='identity')+
+  theme(text=element_text(size=20))
 
-ExtensionCountsLong[!is.na(ExtensionCountsLong$Count) &
-                      ExtensionCountsLong$Type == 'Legit',]
+ggplot(Exten)
+JPEG <- ExtensionCountsLong[which(ExtensionCountsLong$Extension %in% 'jpeg'),]
+ggplot(JPEG, aes(x=Count, fill=Type))+geom_histogram(position="identity",alpha='.5')
+
+html <- ExtensionCountsLong[which(ExtensionCountsLong$Extension %in% 'html'),]
+ggplot(html, aes(x=Count, fill=Type))+geom_histogram(position="identity",alpha='.5')
