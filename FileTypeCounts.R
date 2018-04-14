@@ -2,12 +2,6 @@
 #Then, I used 7zip to extract and delete all .rar files
 
 library(tools)
-#I though I was going to use this list of file extensions to check which file ext were actual
-#But all file ext seem okay now
-#Copied from https://www.webopedia.com/quick_ref/fileextensionsfull.asp on 2/12/2018 6:11 pm
-#ExtensionList <- read.csv('ExtensionList.csv')
-#ExtensionList[,1] <- substring(ExtensionList[,1],2)
-
 
 #Create a list of all files with Legit Pharmacies (only 4 folders, so making it manually)
 #For some reason, this was the way 7Zip extracted my files. You may need to change these
@@ -93,9 +87,55 @@ ggplot(AggExt, aes(x=Extension,
   geom_bar(position='dodge',stat='identity')+
   theme(text=element_text(size=20))
 
-ggplot(Exten)
-JPEG <- ExtensionCountsLong[which(ExtensionCountsLong$Extension %in% 'jpeg'),]
-ggplot(JPEG, aes(x=Count, fill=Type))+geom_histogram(position="identity",alpha='.5')
 
-html <- ExtensionCountsLong[which(ExtensionCountsLong$Extension %in% 'html'),]
-ggplot(html, aes(x=Count, fill=Type))+geom_histogram(position="identity",alpha='.5')
+
+ext <- c('asp','cfm','gif','html','jpeg','php','png','wd3')
+for(i in 1:(length(ext))){
+  EXT <- ExtensionCountsLong[which(ExtensionCountsLong$Extension %in% ext[i]),]
+  g <- ggplot(EXT, aes(x=Count, fill=Type))+
+  geom_histogram(position="identity",alpha='.5', binwidth = 100)+
+    labs(x=ext[i])+theme(text=element_text(size=20))
+  print(g)
+  }
+
+
+for(i in 3:10)
+ks.test(ExtensionCounts[which(ExtensionCounts$Type == 'Legit'),10],
+        ExtensionCounts[which(ExtensionCounts$Type == 'Fake'),10])
+head(totals)
+head(ExtensionCounts)
+#wd3, png-ish, html
+totals <- aggregate(Count~Website+Type,data=ExtensionCountsLong,FUN=sum)
+outliers <- ExtensionCountsLong[which(ExtensionCountsLong$Count > 1000),]
+ggplot(totals,aes(x=Count,fill=Type))+geom_histogram(position="identity",alpha='.5')+
+  labs(x='Total Files')+theme(text=element_text(size=20))
+totals[which(totals$Count<100),]
+
+aggregate(Count~Type, data=totals, FUN=median)
+wilcox.test(Count~Type, data=totals)
+kruskal.test(Count~Type, data=totals)
+
+library(Hmisc)
+bootdif <- function(y, g) {
+  ## Ensure treatment group is a factor
+  g <- as.factor(g)
+  ## Use the smean.cl.boot function to bootstrap means for
+  # variable y for each treatment group (A and B); this code
+  # uses 2000 samples, but can easily be changed
+  a <- attr(smean.cl.boot(y[g==levels(g)[1]],
+                          B=2000, reps=TRUE), 'reps')
+  b <- attr(smean.cl.boot(y[g==levels(g)[2]],
+                          B=2000, reps=TRUE), 'reps')
+  ## Calculate the observed mean difference between groups
+  meandif <- diff(tapply(y, g, mean, na.rm=TRUE))
+  ## Calculate the 2.5 and 97.5 percentiles of the differences
+  # in bootstrapped means
+  # (can easily be changed for 90% CI, 99% CI, etc.)
+  a.b <- quantile(b-a, c(.025,.975))
+  ## Prepare object to return
+  res <- c(meandif, a.b)
+  names(res) <- c('Mean','.025','.975')
+  res
+}
+
+bootdif(totals$Count,totals$Type)
